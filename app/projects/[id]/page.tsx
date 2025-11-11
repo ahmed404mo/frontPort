@@ -53,23 +53,80 @@ const ResourceModal = ({ resource, onClose, domain }) => {
       break;
 
     case 'powerpoint':
-      const fullPowerpointUrl = `${domain}${resource.href}`;
+      // تحقق إذا كان الـ href رابط كامل (يبدأ بـ http/https) أم لا
+      let fullPowerpointUrl = resource.href;
+      if (!resource.href?.startsWith('http')) {
+        fullPowerpointUrl = `${domain}${resource.href}`;
+      }
+      
+      // إذا كان ملف PPTX محلي، استخدم Office Viewer، وإلا استخدم الرابط مباشرة (مثل Google Slides pub)
+      let iframeSrc;
+      if (fullPowerpointUrl?.endsWith('.pptx') || fullPowerpointUrl?.endsWith('.ppt')) {
+        iframeSrc = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fullPowerpointUrl)}`;
+      } else {
+        iframeSrc = fullPowerpointUrl;
+        // لو رابط Google Slides pub، أضف &embedded=true للـ iframe
+        if (iframeSrc.includes('/pub?') && !iframeSrc.includes('embedded=true')) {
+          iframeSrc += '&embedded=true';
+        }
+      }
+      
       content = (
         <iframe
-          src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fullPowerpointUrl)}`}
+          src={iframeSrc}
           title={resource.title}
           className='w-full h-full bg-white'
           frameBorder="0"
+          allowFullScreen
         ></iframe>
       );
       break;
 
     case 'pdf':
+      let pdfSrc = resource.href;
+      if (!pdfSrc) {
+        content = <p className="p-8 text-gray-600">No lesson plan available for this week yet.</p>;
+        break;
+      }
+      
+      // لو Google Presentation (حتى لو في case 'pdf'، عشان الرابط ده slides مش pdf)
+      if (pdfSrc.includes('docs.google.com/presentation/d/')) {
+        let presentationId;
+        if (pdfSrc.includes('/d/')) {
+          presentationId = pdfSrc.split('/d/')[1].split('/')[0];
+        }
+        if (presentationId) {
+          pdfSrc = `https://docs.google.com/presentation/d/${presentationId}/embed`;
+        }
+      }
+      // لو من Google Drive file أو Google Docs، حوّله لـ preview عام
+      else if (pdfSrc.includes('drive.google.com/file/d/') || pdfSrc.includes('docs.google.com/document')) {
+        let fileId;
+        if (pdfSrc.includes('/file/d/')) {
+          fileId = pdfSrc.split('/file/d/')[1].split('/')[0];
+        } else if (pdfSrc.includes('/document/d/')) {
+          fileId = pdfSrc.split('/document/d/')[1].split('/')[0];
+        }
+        if (fileId) {
+          pdfSrc = `https://drive.google.com/file/d/${fileId}/preview`;
+        }
+      } else if (!pdfSrc.startsWith('http')) {
+        // لو relative، أضف الـ domain
+        pdfSrc = `${domain}${pdfSrc}`;
+      }
+      
+      // لو PDF عادي، استخدم Google Viewer كـ fallback
+      if (pdfSrc.endsWith('.pdf')) {
+        pdfSrc = `https://docs.google.com/gview?url=${encodeURIComponent(pdfSrc)}&embedded=true`;
+      }
+      
       content = (
         <iframe
-          src={resource.href}
+          src={pdfSrc}
           title={resource.title}
-          className='w-full h-full'
+          className='w-full h-full bg-white'
+          frameBorder="0"
+          allowFullScreen
         ></iframe>
       );
       break;
