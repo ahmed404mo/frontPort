@@ -1,12 +1,56 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Loader2, Download } from "lucide-react"
 import ParticlesBackground from "@/components/particles-background"
-import Image from "next/image"
+
+// تعريف شكل البيانات اللي هترجع من الباك اند
+interface ProfileData {
+  fullName: string;
+  jobTitle: string;
+  bio: string;
+  avatar: string;
+  cvLink?: string;
+  projectsCount?: string;
+  certificatesCount?: string;
+  skillsCount?: string;
+}
 
 export default function Home() {
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // جلب البيانات من الباك اند
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("https://portfolioapi-flame.vercel.app/profile");
+        const result = await res.json();
+        
+        if (result.data) {
+          setProfile(result.data);
+        } else {
+           console.warn("Profile data is empty or malformed", result);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0D1117] flex items-center justify-center">
+        <Loader2 className="text-[#00BFFF] animate-spin" size={48} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0D1117] relative overflow-hidden">
       <ParticlesBackground />
@@ -28,7 +72,7 @@ export default function Home() {
                 transition={{ delay: 0.2 }}
                 className="text-[#00BFFF] font-semibold text-lg"
               >
-                Early Childhood Education Student
+                {profile?.jobTitle || "Full-Stack Developer"}
               </motion.p>
 
               <motion.h1
@@ -37,7 +81,7 @@ export default function Home() {
                 transition={{ delay: 0.3 }}
                 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight"
               >
-                Hi, I'm <span className="gradient-text">Ahmed</span>
+                Hi, I'm <span className="gradient-text">{profile?.fullName?.split(' ')[0] || "Ahmed"}</span>
               </motion.h1>
 
               <motion.p
@@ -46,7 +90,7 @@ export default function Home() {
                 transition={{ delay: 0.4 }}
                 className="text-xl text-[#9CA3AF] leading-relaxed"
               >
-                Combining education and creativity through technology
+                Building scalable web applications and intuitive digital experiences
               </motion.p>
 
               <motion.p
@@ -55,15 +99,14 @@ export default function Home() {
                 transition={{ delay: 0.5 }}
                 className="text-lg text-[#6B7280] leading-relaxed"
               >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
-                dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.
+                {profile?.bio || "Passionate about engineering robust web applications and scalable digital solutions."}
               </motion.p>
 
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="flex flex-col sm:flex-row gap-4 pt-8"
+                className="flex flex-col sm:flex-row flex-wrap gap-4 pt-8" 
               >
                 <Link
                   href="/projects"
@@ -72,6 +115,19 @@ export default function Home() {
                   View Projects
                   <ArrowRight size={20} />
                 </Link>
+
+                {profile?.cvLink && (
+                  <a
+                    href={profile.cvLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#161B22] border border-[#30363D] text-white font-semibold rounded-lg hover:bg-[#30363D] hover:border-[#00BFFF]/50 transition-all glow-border"
+                  >
+                    <Download size={20} className="text-[#00BFFF]" />
+                    Download CV
+                  </a>
+                )}
+
                 <Link
                   href="/contact"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-[#00BFFF] text-[#00BFFF] font-semibold rounded-lg hover:bg-[#00BFFF]/10 transition-all glow-border"
@@ -88,21 +144,16 @@ export default function Home() {
               className="relative order-1 lg:order-2 flex justify-center"
             >
               <div className="relative">
-                {/* Glow effect behind image */}
                 <div className="absolute inset-0 bg-gradient-to-r from-[#00BFFF] to-[#3B82F6] rounded-full blur-3xl opacity-30 animate-pulse" />
 
-                {/* Image container */}
-                <div className="relative w-72 h-72 md:w-96 md:h-96 rounded-full overflow-hidden border-4 border-[#00BFFF]/30 shadow-2xl shadow-[#00BFFF]/20">
-                  <Image
-                    src="/professional-portrait.png"
-                    alt="Ahmed's Profile"
-                    fill
-                    className="object-cover"
-                    priority
+                <div className="relative w-72 h-72 md:w-96 md:h-96 rounded-full overflow-hidden border-4 border-[#00BFFF]/30 shadow-2xl shadow-[#00BFFF]/20 bg-[#0D1117]">
+                  <img
+                    src={profile?.avatar || "/portTwo.png"}
+                    alt={`${profile?.fullName || "Ahmed"}'s Profile`}
+                    className="w-full h-full object-cover"
                   />
                 </div>
 
-                {/* Floating decorative elements */}
                 <motion.div
                   animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
                   transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
@@ -124,9 +175,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { number: "10+", label: "Projects Completed" },
-              { number: "5+", label: "Certificates Earned" },
-              { number: "15+", label: "Skills Mastered" },
+              { number: profile?.projectsCount || "10+", label: "Projects Completed" },
+              { number: profile?.certificatesCount || "5+", label: "Certificates Earned" },
+              { number: profile?.skillsCount || "15+", label: "Skills Mastered" },
             ].map((stat, i) => (
               <motion.div
                 key={i}
@@ -160,8 +211,7 @@ export default function Home() {
               Let's Create Something <span className="gradient-text">Amazing</span> Together
             </h2>
             <p className="text-lg text-[#9CA3AF] leading-relaxed max-w-2xl mx-auto">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
-              dolore magna aliqua. Ut enim ad minim veniam.
+              Ready to turn your ideas into scalable digital realities? Let's build robust web applications together.
             </p>
             <Link
               href="/contact"

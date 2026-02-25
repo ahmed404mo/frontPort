@@ -1,226 +1,175 @@
 "use client"
 
-import React, { useRef, useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { BookOpen, Heart, Lightbulb, Users } from "lucide-react"
-import { ProgrammingLanguages } from "@/components/animated-elements"
+import { Lightbulb, Loader2, Target, Rocket, ShieldCheck, Cpu, Database, Code2 } from "lucide-react"
+import ParticlesBackground from "@/components/particles-background"
+import Image from "next/image"
 
-export default function Home() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+// 1. تعريف واجهات البيانات
+interface ProfileData {
+  fullName: string;
+  avatar: string;
+}
 
+interface AboutData {
+  pageTitle: string;
+  pageSubtitle: string;
+  missionTitle: string;
+  missionDescription: string;
+}
+
+export default function AboutPage() {
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [about, setAbout] = useState<AboutData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 2. جلب البيانات من 2 APIs في نفس الوقت
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [profileRes, aboutRes] = await Promise.all([
+          fetch("https://portfolioapi-flame.vercel.app/profile"),
+          fetch("https://portfolioapi-flame.vercel.app/about")
+        ]);
+
+        const profileResult = await profileRes.json();
+        const aboutResult = await aboutRes.json();
+        
+        if (profileResult.success && profileResult.data) {
+          setProfile(profileResult.data);
+        }
+        if (aboutResult.success && aboutResult.data) {
+          setAbout(aboutResult.data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // المبادئ ثابتة برمجياً حالياً لضمان شكل الأيقونات
   const values = [
     {
-      icon: BookOpen,
-      title: "Lifelong Learning",
-      description:
-        "Learning never stops. Whether it's mastering a new framework or a new educational theory, I'm always eager to grow.",
+      icon: Code2,
+      title: "Full-Stack Mastery",
+      description: "Expertise in building scalable web applications using React.js, Next.js, and Node.js with a focus on performance.",
     },
     {
-      icon: Heart,
-      title: "Child-Centered",
-      description:
-        "Every tool, game, or story I create is built with the child's perspective in mind. Their curiosity and well-being are the priority.",
+      icon: Database,
+      title: "Database Management",
+      description: "Proficient in both NoSQL (MongoDB) and Relational Databases (SQL/Sequelize) to ensure secure and optimized data architecting.",
     },
     {
       icon: Lightbulb,
-      title: "Innovation",
-      description:
-        "Using technology (like Python or Next.js) to solve old problems in new ways and make complex ideas simple and fun.",
+      title: "Modern Architecture",
+      description: "Leveraging Express.js and Mongoose to create robust RESTful APIs and clean, maintainable backend systems.",
     },
     {
-      icon: Users,
-      title: "Collaboration",
-      description:
-        "Working with educators, designers, and developers to bring ideas to life. Great things are rarely built alone.",
+      icon: ShieldCheck,
+      title: "Quality First",
+      description: "Committed to writing clean, documented, and secure code that follows industry best practices and design patterns.",
     },
   ]
 
-  // كود الـ Canvas: Network Graph أزرق زي الصورة (nodes و lines متصلة مع حركة خفيفة)
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    let animationFrameId: number
-    const nodes: { x: number; y: number; vx: number; vy: number; radius: number }[] = []
-    const numNodes = 20 // عدد النودز للشبكة
-    const width = canvas.width
-    const height = canvas.height
-
-    // إنشاء النودز عشوائيًا
-    const createNodes = (w: number, h: number) => {
-      nodes.length = 0
-      for (let i = 0; i < numNodes; i++) {
-        nodes.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          vx: (Math.random() - 0.5) * 0.5, // حركة بطيئة جدًا
-          vy: (Math.random() - 0.5) * 0.5,
-          radius: Math.random() * 3 + 2,
-        })
-      }
-    }
-
-    // حساب المسافة بين نودزين
-    const distance = (x1: number, y1: number, x2: number, y2: number) => {
-      return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-    }
-
-    const draw = () => {
-      const w = canvas.width
-      const h = canvas.height
-      if (w === 0 || h === 0) {
-        animationFrameId = requestAnimationFrame(draw)
-        return
-      }
-
-      // خلفية سوداء غامقة زي الصورة
-      ctx.fillStyle = "#0a0a1a" // أسود غامق
-      ctx.fillRect(0, 0, w, h)
-
-      // حركة النودز مع ارتداد
-      nodes.forEach(node => {
-        node.x += node.vx
-        node.y += node.vy
-        if (node.x < 0 || node.x > w) node.vx *= -1
-        if (node.y < 0 || node.y > h) node.vy *= -1
-      })
-
-      // رسم الخطوط (connections) بين النودز القريبة
-      ctx.strokeStyle = "rgba(30, 144, 255, 0.3)" // أزرق فاتح شفاف
-      ctx.lineWidth = 1
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dist = distance(nodes[i].x, nodes[i].y, nodes[j].x, nodes[j].y)
-          if (dist < 150) { // ربط النودز القريبة فقط
-            ctx.beginPath()
-            ctx.moveTo(nodes[i].x, nodes[i].y)
-            ctx.lineTo(nodes[j].x, nodes[j].y)
-            ctx.stroke()
-          }
-        }
-      }
-
-      // رسم النودز
-      nodes.forEach(node => {
-        ctx.fillStyle = "rgba(30, 144, 255, 0.8)" // أزرق للنودز
-        ctx.beginPath()
-        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2)
-        ctx.fill()
-
-        // إضاءة خفيفة (glow) زي الصورة
-        ctx.shadowColor = "rgba(30, 144, 255, 0.5)"
-        ctx.shadowBlur = 5
-        ctx.fill()
-        ctx.shadowBlur = 0 // إعادة للطبيعي
-      })
-
-      animationFrameId = requestAnimationFrame(draw)
-    }
-
-    // Resize handling
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (entries[0]) {
-        const { width: newW, height: newH } = entries[0].contentRect
-        canvas.width = newW
-        canvas.height = newH
-        createNodes(newW, newH)
-        if (animationFrameId) cancelAnimationFrame(animationFrameId)
-        draw()
-      }
-    })
-    resizeObserver.observe(canvas)
-
-    createNodes(width, height)
-    draw()
-
-    return () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId)
-      resizeObserver.unobserve(canvas)
-    }
-  }, [])
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0D1117] flex items-center justify-center">
+        <Loader2 className="text-[#00BFFF] animate-spin" size={48} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#F9FAFB] to-white relative overflow-hidden">
-      <ProgrammingLanguages />
+    <div className="min-h-screen bg-[#0D1117] relative overflow-hidden text-white">
+      <ParticlesBackground />
 
       {/* Hero Section */}
-      <section className="relative pt-20 pb-16 px-4 sm:px-6 lg:px-8 z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-4"
-          >
-            <h1 className="text-5xl md:text-6xl font-bold text-[#1E293B]">Ahmed's World</h1>
-            <p className="text-xl text-[#64748B]">Welcome to my digital playground – where education meets innovation</p>
-          </motion.div>
-        </div>
+      <section className="relative pt-32 pb-16 px-4 sm:px-6 lg:px-8 z-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="max-w-4xl mx-auto space-y-4"
+        >
+          {/* 👈 ربط العنوان الرئيسي */}
+          <h1 className="text-5xl md:text-6xl font-bold">
+            {about?.pageTitle || "Behind the Systems"}
+          </h1>
+          {/* 👈 ربط العنوان الفرعي */}
+          <p className="text-xl text-[#9CA3AF]">
+            {about?.pageSubtitle || "Engineering high-performance solutions with modern stacks"}
+          </p>
+        </motion.div>
       </section>
 
-      {/* Main Content */}
+      {/* Main Content Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
-            {/* Canvas Container - Network Graph */}
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
+            
+            {/* Left - Profile Image */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8 }}
-              className="relative h-96 w-full rounded-3xl overflow-hidden shadow-2xl border border-[#1E90FF]/30"
+              className="relative flex justify-center"
             >
-              <canvas ref={canvasRef} className="w-full h-full" />
+              <div className="relative w-72 h-72 md:w-80 md:h-80 lg:w-[400px] lg:h-[400px]">
+                <div className="absolute inset-0 bg-[#00BFFF]/20 rounded-full blur-[80px] animate-pulse" />
+                <div className="relative w-full h-full rounded-3xl overflow-hidden border border-[#30363D] shadow-2xl">
+                  {/* 👈 ربط الصورة بالبروفايل */}
+                  <Image 
+                    src={profile?.avatar || "/portTwo.png"} 
+                    alt={`${profile?.fullName || "Ahmed Mokhtar"} - Full Stack Developer`}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
             </motion.div>
 
-            {/* Right - Intro */}
+            {/* Right - Bio Content */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-6"
+              className="space-y-8"
             >
               <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-[#1E293B]">My Universe</h2>
-                <p className="text-lg text-[#64748B] leading-relaxed">
-                  Dive into a connected world of ideas, where every node represents a passion, and every link is a collaboration.
-                </p>
-                <p className="text-lg text-[#64748B] leading-relaxed">
-                  From coding interactive stories to designing child-friendly apps, this graph visualizes the flow of creativity.
+                <h2 className="text-3xl font-bold flex items-center gap-3">
+                  <Cpu className="text-[#00BFFF]" /> 
+                  {/* 👈 ربط عنوان الرؤية */}
+                  {about?.missionTitle || "Technical Vision"}
+                </h2>
+                <p className="text-lg text-[#9CA3AF] leading-relaxed">
+                  {/* 👈 ربط محتوى الرؤية */}
+                  {about?.missionDescription || "I am a Full-Stack Developer specializing in the MERN stack (MongoDB, Express, React, Node.js). I build end-to-end applications with advanced state management in Next.js and robust backend logic using Sequelize and Mongoose."}
                 </p>
               </div>
-
-              <div className="space-y-3">
-                <h3 className="text-xl font-bold text-[#1E293B]">Explore Connections</h3>
-                <ul className="space-y-2 text-[#64748B]">
-                  <li className="flex items-start gap-3">
-                    <span className="text-[#1E90FF] font-bold mt-1 text-lg">→</span>
-                    <span>Interactive learning tools built with Next.js and Python.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-[#1E90FF] font-bold mt-1 text-lg">→</span>
-                    <span>Stories and games that spark young imaginations.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-[#1E90FF] font-bold mt-1 text-lg">→</span>
-                    <span>Collaborative projects linking education and tech.</span>
-                  </li>
-                </ul>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+                <div className="p-6 rounded-2xl bg-[#161B22] border border-[#30363D] hover:border-[#00BFFF]/40 transition-colors group">
+                  <Rocket className="text-[#00BFFF] mb-3 group-hover:scale-110 transition-transform" size={24} />
+                  <h4 className="font-bold text-white">Scale & Speed</h4>
+                  <p className="text-sm text-[#6B7280] mt-1">Optimizing frontend rendering and backend query performance.</p>
+                </div>
+                <div className="p-6 rounded-2xl bg-[#161B22] border border-[#30363D] hover:border-[#00BFFF]/40 transition-colors group">
+                  <ShieldCheck className="text-[#00BFFF] mb-3 group-hover:scale-110 transition-transform" size={24} />
+                  <h4 className="font-bold text-white">Clean Architecture</h4>
+                  <p className="text-sm text-[#6B7280] mt-1">Implementing MVC patterns and modular code structures.</p>
+                </div>
               </div>
             </motion.div>
           </div>
 
-          {/* Values Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-12"
-          >
-            <div className="text-center space-y-4">
-              <h2 className="text-4xl font-bold text-[#1E293B]">Core Principles</h2>
-              <p className="text-lg text-[#64748B]">The nodes that power my network</p>
+          {/* Core Principles Grid */}
+          <div className="space-y-16">
+            <div className="text-center space-y-3">
+              <h2 className="text-4xl font-bold">Guiding Principles</h2>
+              <p className="text-[#9CA3AF] max-w-xl mx-auto text-lg">My commitment to excellence through modern technology and efficient engineering.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -232,50 +181,22 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    className="p-8 rounded-2xl bg-gradient-to-br from-white to-[#F9FAFB] border-2 border-[#1E90FF]/20 hover:border-[#1E90FF]/50 transition-all duration-300 hover:shadow-xl"
+                    className="p-10 rounded-3xl bg-[#161B22] border border-[#30363D] hover:border-[#00BFFF]/50 transition-all group"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-lg bg-gradient-to-br from-[#1E90FF] to-[#00BFFF] text-white">
-                        <Icon size={24} />
+                    <div className="flex flex-col sm:flex-row items-start gap-6">
+                      <div className="p-4 rounded-2xl bg-[#00BFFF]/10 text-[#00BFFF] group-hover:bg-[#00BFFF] group-hover:text-white transition-all duration-300">
+                        <Icon size={28} />
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-[#1E293B]">{value.title}</h3>
-                        <p className="text-[#64748B]">{value.description}</p>
+                      <div className="space-y-3">
+                        <h3 className="text-2xl font-bold">{value.title}</h3>
+                        <p className="text-[#9CA3AF] text-lg leading-relaxed">{value.description}</p>
                       </div>
                     </div>
                   </motion.div>
                 )
               })}
             </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Education/Next Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white relative z-10">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-8"
-          >
-            <div className="text-center space-y-4">
-              <h2 className="text-4xl font-bold text-[#1E293B]">Next Connections</h2>
-              <p className="text-lg text-[#64748B]">Join the network</p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="p-8 rounded-2xl bg-gradient-to-r from-[#1E90FF]/10 to-[#00BFFF]/10 border-l-4 border-[#1E90FF]">
-                <h3 className="text-2xl font-bold text-[#1E293B] mb-2">Faculty of Early Childhood Education</h3>
-                <p className="text-[#64748B] mb-3">Currently Building the Future</p>
-                <p className="text-[#64748B] leading-relaxed">
-                  Linking pedagogy with pixels – every lesson a new edge in the graph of knowledge.
-                </p>
-              </div>
-            </div>
-          </motion.div>
+          </div>
         </div>
       </section>
     </div>
