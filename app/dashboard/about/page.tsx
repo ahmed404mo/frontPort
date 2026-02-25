@@ -10,7 +10,8 @@ import {
   Info,
   ArrowLeft,
   Cpu,
-  Type
+  Type,
+  Image as ImageIcon // 👈 ضفنا أيقونة الصورة هنا
 } from "lucide-react"
 
 export default function AboutDashboard() {
@@ -19,19 +20,20 @@ export default function AboutDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  // 1. حالة البيانات (متوافقة مع about.model.js الجديد)
+  // 1. حالة البيانات (ضفنا فيها aboutImage)
   const [formData, setFormData] = useState({
     pageTitle: "",
     pageSubtitle: "",
     missionTitle: "",
-    missionDescription: ""
+    missionDescription: "",
+    aboutImage: "" // 👈 حقل الصورة الجديد
   })
 
-  // 2. جلب بيانات About من الـ Endpoint الجديد
+  // 2. جلب بيانات About
   const fetchAboutData = async () => {
     try {
-      // لاحظ إننا بنكلم /about مش /profile
-      const res = await fetch("https://back-end-portfolio-ahmed.vercel.app/about") 
+      // 👈 وحدنا اللينك هنا عشان يكلم نفس الباك إند
+      const res = await fetch("https://portfolioapi-flame.vercel.app/about", { cache: "no-store" }) 
       const result = await res.json()
       
       if (result.data) {
@@ -39,7 +41,8 @@ export default function AboutDashboard() {
           pageTitle: result.data.pageTitle || "Behind the Systems",
           pageSubtitle: result.data.pageSubtitle || "Engineering high-performance solutions...",
           missionTitle: result.data.missionTitle || "Technical Vision",
-          missionDescription: result.data.missionDescription || "I am a Full-Stack Developer..."
+          missionDescription: result.data.missionDescription || "I am a Full-Stack Developer...",
+          aboutImage: result.data.aboutImage || "" // 👈 جلب الصورة لو موجودة
         })
       }
     } catch (error) {
@@ -51,7 +54,7 @@ export default function AboutDashboard() {
 
   useEffect(() => { fetchAboutData() }, [])
 
-  // 3. تحديث بيانات About (PUT Request لـ /about)
+  // 3. تحديث بيانات About
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -107,7 +110,7 @@ export default function AboutDashboard() {
           <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
             <Info className="text-[#00BFFF]" /> About Page Content
           </h1>
-          <p className="text-[#9CA3AF]">Manage the text and mission statement on your public About page.</p>
+          <p className="text-[#9CA3AF]">Manage the text, image, and mission statement on your public About page.</p>
         </div>
         
         <AnimatePresence>
@@ -152,6 +155,21 @@ export default function AboutDashboard() {
                 placeholder="Engineering high-performance solutions..."
                 className="w-full bg-[#0D1117] border border-[#30363D] rounded-xl px-4 py-3 text-white focus:border-[#00BFFF] outline-none resize-none"
               />
+            </div>
+
+            {/* 👈 ضفنا حقل الصورة هنا */}
+            <div className="space-y-1 pt-2">
+              <label className="text-xs text-[#9CA3AF]">About Page Image URL (Optional)</label>
+              <div className="relative">
+                <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]" size={16} />
+                <input 
+                  value={formData.aboutImage}
+                  onChange={e => setFormData({...formData, aboutImage: e.target.value})}
+                  placeholder="https://example.com/image.png"
+                  className="w-full bg-[#0D1117] border border-[#30363D] rounded-xl pl-10 pr-4 py-3 text-white focus:border-[#00BFFF] outline-none"
+                />
+              </div>
+              <p className="text-[10px] text-[#6B7280] mt-1 pl-1">Leave empty to use your default profile avatar.</p>
             </div>
           </div>
         </div>

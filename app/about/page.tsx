@@ -14,9 +14,11 @@ interface ProfileData {
 
 interface AboutData {
   pageTitle: string;
-  pageSubtitle: string;
+  pagesSubtitle?: string; 
+  pageSubtitle?: string; 
   missionTitle: string;
   missionDescription: string;
+  aboutImage?: string; // 👈 حقل الصورة الخاصة بصفحة About
 }
 
 export default function AboutPage() {
@@ -24,24 +26,28 @@ export default function AboutPage() {
   const [about, setAbout] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 2. جلب البيانات من 2 APIs في نفس الوقت
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [profileRes, aboutRes] = await Promise.all([
-          fetch("https://portfolioapi-flame.vercel.app/profile"),
-          fetch("https://portfolioapi-flame.vercel.app/about")
+          fetch("https://portfolioapi-flame.vercel.app/profile", { cache: "no-store" }),
+          fetch("https://portfolioapi-flame.vercel.app/about", { cache: "no-store" })
         ]);
 
         const profileResult = await profileRes.json();
         const aboutResult = await aboutRes.json();
         
-        if (profileResult.success && profileResult.data) {
-          setProfile(profileResult.data);
+        console.log("Profile Response:", profileResult);
+        console.log("About Response:", aboutResult);
+        
+        if (profileResult?.data) {
+          setProfile(profileResult.data.profile || profileResult.data);
         }
-        if (aboutResult.success && aboutResult.data) {
-          setAbout(aboutResult.data);
+        
+        if (aboutResult?.data) {
+          setAbout(aboutResult.data.about || aboutResult.data);
         }
+
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -95,13 +101,11 @@ export default function AboutPage() {
           transition={{ duration: 0.8 }}
           className="max-w-4xl mx-auto space-y-4"
         >
-          {/* 👈 ربط العنوان الرئيسي */}
           <h1 className="text-5xl md:text-6xl font-bold">
             {about?.pageTitle || "Behind the Systems"}
           </h1>
-          {/* 👈 ربط العنوان الفرعي */}
           <p className="text-xl text-[#9CA3AF]">
-            {about?.pageSubtitle || "Engineering high-performance solutions with modern stacks"}
+            {about?.pagesSubtitle || about?.pageSubtitle || "Engineering high-performance solutions with modern stacks"}
           </p>
         </motion.div>
       </section>
@@ -111,7 +115,7 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
             
-            {/* Left - Profile Image */}
+            {/* Left - Profile/About Image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -121,9 +125,9 @@ export default function AboutPage() {
               <div className="relative w-72 h-72 md:w-80 md:h-80 lg:w-[400px] lg:h-[400px]">
                 <div className="absolute inset-0 bg-[#00BFFF]/20 rounded-full blur-[80px] animate-pulse" />
                 <div className="relative w-full h-full rounded-3xl overflow-hidden border border-[#30363D] shadow-2xl">
-                  {/* 👈 ربط الصورة بالبروفايل */}
+                  {/* 👈 ربط الصورة بـ aboutImage الأول، لو مفيش هيقرأ صورة الـ profile */}
                   <Image 
-                    src={profile?.avatar || "/portTwo.png"} 
+                    src={about?.aboutImage || profile?.avatar || "/portTwo.png"} 
                     alt={`${profile?.fullName || "Ahmed Mokhtar"} - Full Stack Developer`}
                     fill
                     className="object-cover"
@@ -141,11 +145,9 @@ export default function AboutPage() {
               <div className="space-y-4">
                 <h2 className="text-3xl font-bold flex items-center gap-3">
                   <Cpu className="text-[#00BFFF]" /> 
-                  {/* 👈 ربط عنوان الرؤية */}
                   {about?.missionTitle || "Technical Vision"}
                 </h2>
                 <p className="text-lg text-[#9CA3AF] leading-relaxed">
-                  {/* 👈 ربط محتوى الرؤية */}
                   {about?.missionDescription || "I am a Full-Stack Developer specializing in the MERN stack (MongoDB, Express, React, Node.js). I build end-to-end applications with advanced state management in Next.js and robust backend logic using Sequelize and Mongoose."}
                 </p>
               </div>
