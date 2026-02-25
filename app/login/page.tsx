@@ -30,7 +30,6 @@ export default function LoginPage() {
     console.log("🚀 Sending Data:", { email: cleanEmail, password: cleanPassword })
 
     try {
-      // ✅ التعديل هنا: حطينا رابط Vercel بدل localhost
 // في ملف app/login/page.tsx السطر 34
 const response = await fetch("https://portfolioapi-flame.vercel.app/auth/login", {
   method: "POST",
@@ -47,7 +46,6 @@ const response = await fetch("https://portfolioapi-flame.vercel.app/auth/login",
       console.log("📩 Full Server Response:", result)
 
       if (response.ok) {
-        // 2. الوصول للتوكن
         const token = result.data?.account?.token || result.data?.token || result.token || result.message?.token
 
         if (token) {

@@ -15,7 +15,6 @@ export const metadata = {
     type: "website",
   },
 }
-// export default function RootLayout({
 //   children,
 // }: {
 //   children: React.ReactNode
@@ -33,7 +32,7 @@ export const metadata = {
 // app/layout.tsx
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning> {/* أضف هذا الجزء هنا */}
+    <html lang="en" suppressHydrationWarning> 
       <body className={`${inter.className} bg-[#0D1117] text-white antialiased`}>
         <Navigation />
         <main className="min-h-screen">{children}</main>
