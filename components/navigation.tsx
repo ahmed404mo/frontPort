@@ -5,18 +5,18 @@ import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { usePathname } from "next/navigation"; // عشان نعرف اللينك النشط
+import { usePathname } from "next/navigation"; 
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
-  const [hoveredPath, setHoveredPath] = useState<string | null>(null); // لحالة الهوفر
+  const [hoveredPath, setHoveredPath] = useState<string | null>(null); 
   const pathname = usePathname();
   const [profile, setProfile] = useState({ name: "Ahmed", avatar: "/portTwo.png" });
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("https://back-end-portfolio-ahmed.vercel.app/profile");
+        const res = await fetch("https://portfolioapi-flame.vercel.app/profile");
         const result = await res.json();
         if (result?.data?.profile || result?.data) {
           const data = result.data.profile || result.data;
@@ -58,10 +58,9 @@ export default function Navigation() {
             <span className="font-bold text-lg text-white">{profile.name}</span> 
           </Link>
 
-          {/* Desktop Navigation - Vercel Style Hover */}
           <div 
             className="hidden md:flex items-center gap-2"
-            onMouseLeave={() => setHoveredPath(null)} // لما الماوس يبعد الخلفية تختفي
+            onMouseLeave={() => setHoveredPath(null)} 
           >
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
@@ -70,12 +69,11 @@ export default function Navigation() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  onMouseEnter={() => setHoveredPath(link.href)} // تحديد اللينك اللي عليه الماوس
+                  onMouseEnter={() => setHoveredPath(link.href)} 
                   className={`relative px-4 py-2 text-sm font-medium transition-colors duration-300 rounded-md ${
                     isActive ? "text-white" : "text-[#9CA3AF] hover:text-white"
                   }`}
                 >
-                  {/* تأثير الخلفية اللي بتتحرك (Vercel Hover) */}
                   {hoveredPath === link.href && (
                     <motion.span
                       layoutId="hoverBackground"
@@ -93,7 +91,6 @@ export default function Navigation() {
                   
                   {link.label}
 
-                  {/* الخط اللي تحت اللينك النشط (Vercel Style) */}
                   {isActive && (
                     <motion.div
                       layoutId="activeTab"
